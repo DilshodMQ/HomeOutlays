@@ -1,0 +1,111 @@
+﻿@model IEnumerable<HomeOutlays.Models.Outlay>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
+</p>
+<label>Turkumlar boyicha saralash</label>
+<select id="TypeSelect" class="form-select" asp-items="Html.GetEnumSelectList<OutlayTypeEnum>()">
+    <option label="Turkumlar" value="">-- Select Type --</option>
+</select>
+
+<table class="table" id="tdata">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Type)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Cost)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Type)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Cost)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Description)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-success">Details</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section scripts
+{
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Trigger the filter function when the selection changes
+            $("#TypeSelect").change(function () {
+                FilterData();
+            });
+        });
+
+        function FilterData() {
+            // Get the selected value from the dropdown
+            var typeValue = $("#TypeSelect").val();
+            console.log("Selected Type Value:", typeValue);
+            var requestData = {
+                Type: typeValue
+            };
+
+            // Send the selected value to the server as an object
+            $.ajax({
+                type: 'POST',
+                url: '/Outlays/GetFilteredOutlays',
+                data: requestData,
+                success: function (data) {
+                    PopulateTable(data);
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+                }
+            });
+        }
+
+        function PopulateTable(data) {
+            $('#tdata tbody').empty();
+            $.each(data, function (key, value) {
+                // Create action buttons with correct routes and classes
+                var edit_btn = $("<a>").attr("href", "/Outlays/Edit/" + value.id).addClass("btn btn-warning").text("Edit");
+                var details_btn = $("<a>").attr("href", "/Outlays/Details/" + value.id).addClass("btn btn-success").text("Details");
+                var delete_btn = $("<a>").attr("href", "/Outlays/Delete/" + value.id).addClass("btn btn-danger").text("Delete");
+
+                // Add actions into the last cell
+                var actions = $("<td>").append(edit_btn, " ", details_btn, " ", delete_btn);
+
+                // Create table row with the correct fields (Type, Cost, Description)
+                var row = $("<tr>").append(
+                    $("<td>").text(value.type),
+                    $("<td>").text(value.cost),
+                    $("<td>").text(value.description),
+                    actions
+                );
+
+                // Append the row to the table body
+                $('#tdata tbody').append(row);
+            });
+        }
+    </script>
+}
